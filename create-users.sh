@@ -53,6 +53,6 @@ sed 's|%GITURL%|'"$GOGSURL/$user"'/monster.git|g' monster-dev.yaml | sed 's|%MAV
 sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-prod.yaml | oc create -n uat-$user -f -
 
 # allow uat project to pull images from dev project
-oc policy add-role-to-user system:image-puller system:serviceaccounts:uat-$user -n dev-$user
+oc policy add-role-to-group system:image-puller system:serviceaccounts:uat-$user -n dev-$user
 
 done <users.csv
