@@ -31,7 +31,11 @@ do
 done
 
 oc logs -f builds/monster-1
-sleep 2
+
+while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+do 
+   sleep 1
+done
 oc logs -f monster-1-deploy
 
 fi
@@ -43,10 +47,18 @@ then
 oc delete all --all 
 oc new-app monster-app
 
-sleep 1
+while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+do 
+   sleep 2
+done
 oc logs -f monster-mysql-1-deploy
+
 oc tag monster:latest monster:uat -n dev-$user
-sleep 2
+
+while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+do 
+   sleep 1
+done
 oc logs -f monster-1-deploy
 
 fi
