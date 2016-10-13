@@ -14,6 +14,20 @@ function default_if_empty()
   fi
 }
 
+function watch_deploy
+{
+pod=$1
+count=0
+while [[ $(oc get pod $pod | grep Running | wc -l) -lt 1 ]]
+do
+   sleep 1
+   counter=$((counter + 1))
+   [[ $counter -gt 10 ]] && break
+done
+oc logs -f $pod
+
+}
+
 while IFS=, read user password name
 do
 
@@ -32,11 +46,7 @@ done
 
 oc logs -f builds/monster-1
 
-while [[ $(oc get rc monster-1 --no-headers | wc -l) -lt 1 ]]
-do 
-   sleep 1
-done
-oc logs -f monster-1-deploy
+watch_deploy monster-1-deploy
 
 fi
 
@@ -47,19 +57,11 @@ then
 oc delete all --all 
 oc new-app monster-app
 
-while [[ $(oc get rc monster-mysql-1 --no-headers | wc -l) -lt 1 ]]
-do 
-   sleep 2
-done
-oc logs -f monster-mysql-1-deploy
+watch_deploy monster-mysql-1-deploy
 
 oc tag monster:latest monster:uat -n dev-$user
 
-while [[ $(oc get rc monster-1 --no-headers | wc -l) -lt 1 ]]
-do 
-   sleep 1
-done
-oc logs -f monster-1-deploy
+watch_deploy monster-1-deploy
 
 fi
 
