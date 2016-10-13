@@ -45,14 +45,14 @@ git config credential.helper 'store'
 while IFS=, read user password name
 do
 
-USERADD='\'{ "source_id": 1, "login_name": "'$user'", "username": "'$user'", "email": "'$user'@openshift.red","password":"'$password'" }\''
-REPOADD='\'{"name":"monster","description":"Ticket Monster for '$name'","private":false}\''
+#USERADD='{ "source_id": 1, "login_name": "'$user'", "username": "'$user'", "email": "'$user'@openshift.red","password":"'$password'" }'
+#REPOADD='{"name":"monster","description":"Ticket Monster for '$name'","private":false}'
 
 ## add the user
-curl -v -u $GOGSUSER:$GOGSPASS -H "Content-Type: application/json" -X POST -d $USERADD $GOGSURL/api/v1/admin/users
+curl -v -u $GOGSUSER:$GOGSPASS -H "Content-Type: application/json" -X POST -d '{ "source_id": 1, "login_name": "'$user'", "username": "'$user'", "email": "'$user'@openshift.red","password":"'$password'" }' $GOGSURL/api/v1/admin/users
 
 ## create the repo
-curl -v -u $user:$password -H "Content-Type: application/json" -X POST -d $REPOADD $GOGSURL/api/v1/user/repo
+curl -v -u $user:$password -H "Content-Type: application/json" -X POST -d '{"name":"monster","description":"Ticket Monster for '$name'","private":false}' $GOGSURL/api/v1/user/repo
 
 echo "http://$user:$password@gogs.apps.openshift.red" > $HOME/.git-credentials
 
