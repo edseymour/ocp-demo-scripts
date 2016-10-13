@@ -32,7 +32,7 @@ done
 
 oc logs -f builds/monster-1
 
-while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+while [[ $(oc get rc monster-1 --no-headers | wc -l) -lt 1 ]]
 do 
    sleep 1
 done
@@ -47,7 +47,7 @@ then
 oc delete all --all 
 oc new-app monster-app
 
-while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+while [[ $(oc get rc monster-mysql-1 --no-headers | wc -l) -lt 1 ]]
 do 
    sleep 2
 done
@@ -55,7 +55,7 @@ oc logs -f monster-mysql-1-deploy
 
 oc tag monster:latest monster:uat -n dev-$user
 
-while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+while [[ $(oc get rc monster-1 --no-headers | wc -l) -lt 1 ]]
 do 
    sleep 1
 done
@@ -63,14 +63,14 @@ oc logs -f monster-1-deploy
 
 fi
 
-for attempt in $(seq 1 10); do
+for attempt in $(seq 1 20); do
  ret=$(curl -Is http://monster-dev-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
  [[ $ret -eq 200 ]] && echo "*** dev-$user SUCCESS" && break
  echo "*** dev-$user attempt#$attempt"
  sleep 2
 done
 
-for attempt in $(seq 1 10); do
+for attempt in $(seq 1 20); do
  ret=$(curl -Is http://monster-uat-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
  [[ $ret -eq 200 ]] && echo "*** uat-$user SUCCESS" && break
  echo "*** uat-$user attempt#$attempt"
