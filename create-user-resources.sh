@@ -42,6 +42,10 @@ echo "http://$user:$password@gogs.apps.openshift.red" > $HOME/.git-credentials
 
 pushd ose3-demos-master/git/monster/
 
+git config --global user.name "$name"
+git config --global user.email $user@openshift.red
+git config credential.helper 'store'
+
 git init
 git add .
 git commit -am "inital commit for $name"
