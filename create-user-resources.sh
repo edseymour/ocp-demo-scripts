@@ -31,17 +31,15 @@ USAGE="$0 <Gogs URL> <Gogs User> <Gogs Password>"
 CLONE_URL=https://github.com/jim-minter/ose3-demos.git
 DOWNLOAD_URL=https://github.com/jim-minter/ose3-demos/archive/master.zip
 
-wget $DOWNLOAD_URL
-unzip master.zip
-
 GOGSURL=$1
 check_exists "provide a Gogs URL, $USAGE" $GOGSURL
-
 GOGSUSER=$2
 check_exists "provide a Gogs user, $USAGE" $GOGSUSER
 GOGSPASS=$3
 check_exists "provide a Gogs user password, $USAGE" $GOGSPASS
 
+wget $DOWNLOAD_URL
+unzip master.zip
 git config credential.helper 'store'
 
 while IFS=, read user password name
