@@ -9,13 +9,12 @@ metadata:
       Deploy and run the Ticket Monster App, built in the %DEVNAMESPACE% project. 
 
 parameters:
-- name: ${IMAGE_TAG}
+- name: IMAGE_TAG
   value: uat
   description: 'Please provide the image tag to watch for new deployments'
-- name: ${DEV_NAMESPACE}
+- name: DEV_NAMESPACE
   value: %DEVNAMESPACE%
   description: 'Please provide the source project name'
-
 - name: MYSQL_DATABASE
   value: monster
 - name: MYSQL_USER
@@ -24,6 +23,7 @@ parameters:
   from: '[a-zA-Z0-9]{8}'
   generate: expression
 
+objects:
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
