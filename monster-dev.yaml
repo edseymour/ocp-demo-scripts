@@ -42,6 +42,10 @@ objects:
           kind: ImageStreamTag
           name: jboss-eap64-openshift:latest
           namespace: openshift
+        env:
+          -
+            name: MAVEN_MIRROR_URL
+            value: '%MAVENURL%'
     source:
       type: Git
       git:
