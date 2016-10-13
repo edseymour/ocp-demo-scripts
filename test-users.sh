@@ -18,11 +18,11 @@ function watch_deploy
 {
 pod=$1
 count=0
-while [[ $(oc get pod $pod | grep Running | wc -l) -lt 1 ]]
+while [[ $(oc get pod $pod --no-headers | grep Running | wc -l) -lt 1 ]]
 do
    sleep 1
    counter=$((counter + 1))
-   [[ $counter -gt 10 ]] && break
+   [[ $counter -gt 20 ]] && break
 done
 oc logs -f $pod
 
