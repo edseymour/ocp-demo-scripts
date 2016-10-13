@@ -27,7 +27,6 @@ check_exists "provide a Gogs user password, $USAGE" $GOGSPASS
 
 wget $DOWNLOAD_URL
 unzip master.zip
-git config credential.helper 'store'
 
 while IFS=, read user password name
 do
@@ -38,13 +37,13 @@ curl -v -u $GOGSUSER:$GOGSPASS -H "Content-Type: application/json" -X POST -d '{
 ## create the repo
 curl -v -u $user:$password -H "Content-Type: application/json" -X POST -d '{"name":"monster","description":"Ticket Monster for '"$name"'","private":false}' $GOGSURL/api/v1/user/repos
 
-echo "http://$user:$password@gogs.apps.openshift.red" > $HOME/.git-credentials
-
 pushd ose3-demos-master/git/monster/
 
 git config --global user.name "$name"
-git config --global user.email $user@openshift.red
-git config credential.helper 'store'
+git config --global user.email "$user@openshift.red"
+git config credential.helper 'store --file .git/credentials'
+echo "http://$user:$password@gogs.apps.openshift.red" > .git/credentials
+chmod 600 .git/credentials
 
 git init
 git add .
