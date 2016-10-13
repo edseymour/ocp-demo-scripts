@@ -15,13 +15,11 @@ function default_if_empty()
 }
 
 
-USAGE="$0 <number of users> <gogs-url> <nexus-url>"
+USAGE="$0 <gogs-url> <nexus-url>"
 
-NUM=$1
-check_exists "number of users to create, $USAGE" $NUM
-GOGSURL=$2
+GOGSURL=$1
 check_exists "Gogs URL, $USAGE" $GOGSURL
-MAVENURL=$3
+MAVENURL=$2
 check_exists "Maven repository URL, $USAGE" $MAVENURL
 
 while IFS=, read user password name
