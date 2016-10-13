@@ -49,8 +49,8 @@ echo "** Creating default projects for $user"
 oc adm new-project dev-$user --display-name="App Dev - $name" --description="Application development project, where applications are coded and built" --admin=$user
 oc adm new-project uat-$user --display-name="App Test - $name" --description="Application testing project, where applications tested and approved" --admin=$user
 
-sed 's|%GITURL%|'"$GOGSURL/$user"'/monster.git|g' monster-dev.yaml | sed 's|%MAVENURL%|'"$MAVENURL"'|g' | oc create -f -n dev-$user -
-sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-prod.yaml | oc create -f -n uat-$user -
+sed 's|%GITURL%|'"$GOGSURL/$user"'/monster.git|g' monster-dev.yaml | sed 's|%MAVENURL%|'"$MAVENURL"'|g' | oc create -n dev-$user -f -
+sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-prod.yaml | oc create -n uat-$user -f -
 
 # allow uat project to pull images from dev project
 oc policy add-role-to-user system:image-puller system:serviceaccounts:uat-$user -n dev-$user
