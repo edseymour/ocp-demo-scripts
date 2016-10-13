@@ -30,13 +30,13 @@ rm -f users.csv
 
 for userid in $(seq 1 $NUM); do
 
-   echo "demo$userid,$(mktemp -u XXXXXXXX)" >> users.csv
+   echo "demo$userid,$(mktemp -u XXXXXXXX),Demo User $userid" >> users.csv
 
 done
 
 cat users.csv
 
-while IFS=, read user password
+while IFS=, read user password name
 do
 
 echo "***********************************"
@@ -46,10 +46,10 @@ ansible -i ansible-hosts masters -m "command" -a " htpasswd  -b  /etc/origin/mas
 echo "**"
 echo "**"
 echo "** Creating default projects for $user"
-oc adm new-project dev-$user --display-name="App Dev" --description="Application development project, where applications are coded and built" --admin=$user
-oc adm new-project uat-$user --display-name="App Test" --description="Application testing project, where applications tested and approved" --admin=$user
+oc adm new-project dev-$user --display-name="App Dev - $name" --description="Application development project, where applications are coded and built" --admin=$user
+oc adm new-project uat-$user --display-name="App Test - $name" --description="Application testing project, where applications tested and approved" --admin=$user
 
-sed 's/%GITURI%/http:\/\/gogs.apps.openshift.red\/'"$user"'\/monster.git/g'  monster-dev.yaml | sed 's/%MAVENURL%/'"$MAVENURL"'/g' | oc create -f -n dev-$user -
+sed 's|%GITURL%|'"$GOGSURL/$user"'/monster.git|g' monster-dev.yaml | sed 's|%MAVENURL%|'"$MAVENURL"'|g' | oc create -f -n dev-$user -
 sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-prod.yaml | oc create -f -n uat-$user -
 
 # allow uat project to pull images from dev project

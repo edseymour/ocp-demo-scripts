@@ -14,7 +14,7 @@ parameters:
   description: 'Please provide the image tag to watch for new deployments'
 - name: ${DEV_NAMESPACE}
   value: %DEVNAMESPACE%
-  description: 'Please provide the source project name
+  description: 'Please provide the source project name'
 
 - name: MYSQL_DATABASE
   value: monster
