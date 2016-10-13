@@ -60,7 +60,7 @@ oc new-app monster-app
 watch_deploy monster-mysql-1-deploy
 
 oc tag monster:latest monster:uat -n dev-$user
-
+sleep 3
 watch_deploy monster-1-deploy
 
 fi
