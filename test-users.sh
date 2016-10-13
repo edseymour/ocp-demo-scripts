@@ -31,7 +31,7 @@ do
 done
 
 oc logs -f builds/monster-1
-sleep 1
+sleep 2
 oc logs -f monster-1-deploy
 
 fi
@@ -46,7 +46,7 @@ oc new-app monster-app
 sleep 1
 oc logs -f monster-mysql-1-deploy
 oc tag monster:latest monster:uat -n dev-$user
-
+sleep 2
 oc logs -f monster-1-deploy
 
 fi
@@ -55,12 +55,14 @@ for attempt in $(seq 1 10); do
  ret=$(curl -Is http://monster-dev-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
  [[ $ret -eq 200 ]] && echo "*** dev-$user SUCCESS" && break
  echo "*** dev-$user attempt#$attempt"
+ sleep 2
 done
 
 for attempt in $(seq 1 10); do
  ret=$(curl -Is http://monster-uat-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
- [[ $ret -eq 200 ]] && echo "*** dev-$user SUCCESS" && break
- echo "*** dev-$user attempt#$attempt"
+ [[ $ret -eq 200 ]] && echo "*** uat-$user SUCCESS" && break
+ echo "*** uat-$user attempt#$attempt"
+ sleep 2
 done
 
 oc delete all --all -n dev-$user
