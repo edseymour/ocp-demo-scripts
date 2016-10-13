@@ -51,7 +51,6 @@ objects:
       git:
         uri: '%GITURL%'
         ref: master
-      contextDir: git/monster
     output:
       to:
         kind: ImageStreamTag
