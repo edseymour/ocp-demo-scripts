@@ -36,7 +36,7 @@ do
 curl -v -u $GOGSUSER:$GOGSPASS -H "Content-Type: application/json" -X POST -d '{ "username": "'"$user"'", "email": "'"$user"'@openshift.red","password":"'"$password"'" }' $GOGSURL/api/v1/admin/users
 
 ## create the repo
-curl -v -u $user:$password -H "Content-Type: application/json" -X POST -d '{"name":"monster","description":"Ticket Monster for '"$name"'","private":false}' $GOGSURL/api/v1/user/repo
+curl -v -u $user:$password -H "Content-Type: application/json" -X POST -d '{"name":"monster","description":"Ticket Monster for '"$name"'","private":false}' $GOGSURL/api/v1/user/repos
 
 echo "http://$user:$password@gogs.apps.openshift.red" > $HOME/.git-credentials
 
