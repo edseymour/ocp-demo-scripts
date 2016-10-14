@@ -33,11 +33,11 @@ while [[ $(oc get pod $pod --no-headers -n $proj $OCOPTS 2>/dev/null | grep Runn
 do
    sleep 2
    counter=$((counter + 1))
-   [[ $counter -gt 50 ]] && echo "*** Gave up waiting for pod $pod in project $proj" && break
-   echo "*** Waiting for pod $proj/$pod, attempt $counter"
+   [[ $counter -gt 100 ]] && echo "*** Gave up waiting for pod $pod in project $proj after 200 seconds" && break
 done
 
-oc logs -f $pod -n $proj $OCOPTS
+echo "*** Waiting for watched pod to complete $proj/$pod"
+oc logs -f $pod -n $proj $OCOPTS 2>&1 >/dev/null
 
 }
 
@@ -50,10 +50,6 @@ oc delete all --all -n $proj $OCOPTS
 oc new-app monster -n $proj $OCOPTS
 
 watch_pod monster-1-build $proj
-
-echo "*** Waiting for $user build to complete"
-oc logs -f builds/monster-1 -n $proj $OCOPTS 2>&1 logs/monster-build-$user.log
-
 watch_pod monster-1-deploy $proj
 
 }
@@ -81,13 +77,13 @@ user=$1
 stage=$2
 
 success=0
-for attempt in $(seq 1 50); do
+for attempt in $(seq 1 60); do
  ret=$(curl -Is http://monster-$stage-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
  [[ $ret -eq 200 ]] && echo "*** $stage-$user SUCCESS" && success=1 && break
  sleep 2
 done
 
-[[ $success -eq 0 ]] && echo "*** TIME-OUT: $stage-$user application did not become available within 100 seconds"
+[[ $success -eq 0 ]] && echo "*** TIME-OUT: $stage-$user application did not become available within 2 mins"
 
 }
 
