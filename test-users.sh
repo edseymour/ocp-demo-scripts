@@ -23,41 +23,44 @@ function default_if_empty()
   fi
 }
 
-function watch_deploy
+function watch_deploy()
 {
 pod=$1
-count=0
-while [[ $(oc get pod $pod --no-headers $OCOPTS | grep Running | wc -l) -lt 1 ]]
+proj=$2
+counter=0
+echo "*** Waiting for deployment pod $pod in project $proj"
+while [[ $(oc get pod $pod --no-headers -n $proj $OCOPTS | grep Running | wc -l) -lt 1 ]]
 do
    sleep 2
    counter=$((counter + 1))
-   [[ $counter -gt 20 ]] && break
+   [[ $counter -gt 20 ]] && echo "*** Gave up waiting for deployment pod $pod in project $proj" && break
    echo "*** Waiting for deployer pod, attempt $counter"
 done
-oc logs -f $pod $OCOPTS
+
+oc logs -f $pod -n $proj $OCOPTS
 
 }
 
 function test_dev()
 {
 user=$1
+proj=dev-$user 
+echo "*** Testing development project $proj"
+oc delete all --all -n $proj $OCOPTS
+oc new-app monster -n $proj $OCOPTS
 
-oc project dev-$user $OCOPTS
-
-if [[ "dev-$user" == "$(oc project -q $OCOPTS)" ]]
-then
-
-oc delete all --all $OCOPTS
-oc new-app monster $OCOPTS
-
-while [[ $(oc get builds --no-headers $OCOPTS| wc -l) -lt 1 ]]
+counter=0
+while [[ $(oc get builds --no-headers -n $proj $OCOPTS| wc -l) -lt 1 ]]
 do
    sleep 1
+   counter=$((counter + 1)) 
+   [[ $counter -gt 20 ]] && echo "*** Gave up waiting for build in project $proj" && break
+
 done
 
-oc logs -f builds/monster-1 $OCOPTS > logs/monster-build-$user.log
+oc logs -f builds/monster-1 -n $proj $OCOPTS > logs/monster-build-$user.log
 
-watch_deploy monster-1-deploy
+watch_deploy monster-1-deploy $proj
 
 fi
 
@@ -66,18 +69,16 @@ fi
 function test_uat()
 {
 user=$1
-oc project uat-$user $OCOPTS
-if [[ "uat-$user" == "$(oc project -q $OCOPTS)" ]]
-then
+proj=uat-$user
 
-oc delete all --all $OCOPTS
-oc new-app monster-app $OCOPTS
+echo "*** Testing promotion in project $proj"
+oc delete all --all -n $proj $OCOPTS
+oc new-app monster-app -n $proj $OCOPTS
 
-watch_deploy monster-mysql-1-deploy
+watch_deploy monster-mysql-1-deploy $proj
 
-oc tag monster:latest monster:uat -n dev-$user $OCOPTS
-sleep 3
-watch_deploy monster-1-deploy
+oc tag monster:latest monster:uat -n dev-$user -n $proj $OCOPTS
+watch_deploy monster-1-deploy $proj
 
 fi
 
@@ -102,6 +103,8 @@ function test_user()
 {
 user=$1
 load=$2
+echo "**"
+echo "*** TESTING USER $1"
 test_dev $user
 
 test_uat $user
