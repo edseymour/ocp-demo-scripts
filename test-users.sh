@@ -62,8 +62,6 @@ oc logs -f builds/monster-1 -n $proj $OCOPTS > logs/monster-build-$user.log
 
 watch_deploy monster-1-deploy $proj
 
-fi
-
 }
 
 function test_uat()
@@ -79,8 +77,6 @@ watch_deploy monster-mysql-1-deploy $proj
 
 oc tag monster:latest monster:uat -n dev-$user -n $proj $OCOPTS
 watch_deploy monster-1-deploy $proj
-
-fi
 
 }
 
