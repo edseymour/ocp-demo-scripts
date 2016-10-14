@@ -28,13 +28,13 @@ function watch_pod()
 pod=$1
 proj=$2
 counter=0
-echo "*** Waiting for deployment pod $pod in project $proj"
+echo "*** Waiting for pod $pod in project $proj"
 while [[ $(oc get pod $pod --no-headers -n $proj $OCOPTS 2>/dev/null | grep Running | wc -l) -lt 1 ]]
 do
    sleep 2
    counter=$((counter + 1))
-   [[ $counter -gt 50 ]] && echo "*** Gave up waiting for deployment pod $pod in project $proj" && break
-   echo "*** Waiting for deployer pod, attempt $counter"
+   [[ $counter -gt 50 ]] && echo "*** Gave up waiting for pod $pod in project $proj" && break
+   echo "*** Waiting for pod, attempt $counter"
 done
 
 oc logs -f $pod -n $proj $OCOPTS
@@ -51,7 +51,8 @@ oc new-app monster -n $proj $OCOPTS
 
 watch_pod monster-1-build $proj
 
-oc logs -f builds/monster-1 -n $proj $OCOPTS > logs/monster-build-$user.log
+echo "*** Waiting for $user build to complete"
+oc logs -f builds/monster-1 -n $proj $OCOPTS 2>&1 logs/monster-build-$user.log
 
 watch_pod monster-1-deploy $proj
 
