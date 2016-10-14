@@ -20,16 +20,18 @@ pod=$1
 count=0
 while [[ $(oc get pod $pod --no-headers | grep Running | wc -l) -lt 1 ]]
 do
-   sleep 1
+   sleep 2
    counter=$((counter + 1))
    [[ $counter -gt 20 ]] && break
+   echo "*** Waiting for deployer pod, attempt $counter"
 done
 oc logs -f $pod
 
 }
 
-while IFS=, read user password name
-do
+function test_dev()
+{
+user=$1
 
 oc project dev-$user
 
@@ -44,17 +46,22 @@ do
    sleep 1
 done
 
-oc logs -f builds/monster-1
+oc logs -f builds/monster-1 > logs/monster-build-$user.log
 
 watch_deploy monster-1-deploy
 
 fi
 
+}
+
+function test_uat()
+{
+user=$1
 oc project uat-$user
 if [[ "uat-$user" == "$(oc project -q)" ]]
 then
 
-oc delete all --all 
+oc delete all --all
 oc new-app monster-app
 
 watch_deploy monster-mysql-1-deploy
@@ -65,22 +72,65 @@ watch_deploy monster-1-deploy
 
 fi
 
+}
+
+function test_app()
+{
+user=$1
+stage=$2
+
 for attempt in $(seq 1 20); do
- ret=$(curl -Is http://monster-dev-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
- [[ $ret -eq 200 ]] && echo "*** dev-$user SUCCESS" && break
- echo "*** dev-$user attempt#$attempt"
+ ret=$(curl -Is http://monster-$stage-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
+ [[ $ret -eq 200 ]] && echo "*** $stage-$user SUCCESS" && break
+ echo "*** $stage-$user attempt#$attempt"
  sleep 2
 done
 
-for attempt in $(seq 1 20); do
- ret=$(curl -Is http://monster-uat-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
- [[ $ret -eq 200 ]] && echo "*** uat-$user SUCCESS" && break
- echo "*** uat-$user attempt#$attempt"
- sleep 2
-done
 
-oc delete all --all -n dev-$user
-oc delete all --all -n uat-$user
+}
 
+function test_user()
+{
+user=$1
+load=$2
+test_dev $user
+
+test_uat $user
+
+test_app $user 'dev'
+test_app $user 'uat'
+
+  if [[ $load -eq 0 ]]; then
+    oc delete all --all -n dev-$user
+    oc delete all --all -n uat-$user
+  fi
+}
+
+LOADTEST=$([[ "$@" == *"load"* ]] && echo "1")
+
+mkdir logs
+echo "*** Build logs written to ./logs directory"
+
+if [[ $LOADTEST -eq 0 ]]; then echo "*** Sequential build test started: $(date)"
+else echo "*** Load test started: $(date)"; fi
+
+while IFS=, read user password name
+do
+
+test_user $user $LOADTEST &
 
 done <users.csv
+
+wait
+if [[ $LOADTEST -eq 0 ]]; then echo "*** Sequential build completed : $(date)"
+else
+
+  while IFS=, read user password name
+  do
+    oc delete all --all -n dev-$user
+    oc delete all --all -n uat-$user
+  done
+
+  echo "*** Load test completed: $(date)"
+
+fi 
