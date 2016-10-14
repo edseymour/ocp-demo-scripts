@@ -69,7 +69,7 @@ oc new-app monster-app -n $proj $OCOPTS
 
 watch_pod monster-mysql-1-deploy $proj
 
-echo "*** Tagging image"
+echo "*** Tagging image dev-$user/monster:latest"
 oc tag monster:latest monster:uat -n dev-$user $OCOPTS
 watch_pod monster-1-deploy $proj
 
@@ -80,13 +80,14 @@ function test_app()
 user=$1
 stage=$2
 
-for attempt in $(seq 1 20); do
+success=0
+for attempt in $(seq 1 50); do
  ret=$(curl -Is http://monster-$stage-$user.apps.openshift.red | grep HTTP| awk '{print $2}')
- [[ $ret -eq 200 ]] && echo "*** $stage-$user SUCCESS" && break
- echo "*** $stage-$user attempt#$attempt"
+ [[ $ret -eq 200 ]] && echo "*** $stage-$user SUCCESS" && success=1 && break
  sleep 2
 done
 
+[[ $success -eq 0 ]] && echo "*** TIME-OUT: $stage-$user application did not become available within 100 seconds"
 
 }
 
