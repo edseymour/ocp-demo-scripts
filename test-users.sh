@@ -34,7 +34,7 @@ do
    sleep 2
    counter=$((counter + 1))
    [[ $counter -gt 50 ]] && echo "*** Gave up waiting for pod $pod in project $proj" && break
-   echo "*** Waiting for pod, attempt $counter"
+   echo "*** Waiting for pod $proj/$pod, attempt $counter"
 done
 
 oc logs -f $pod -n $proj $OCOPTS
