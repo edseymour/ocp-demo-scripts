@@ -133,7 +133,7 @@ else
   do
     oc delete all --all -n dev-$user $OCOPTS
     oc delete all --all -n uat-$user $OCOPTS
-  done
+  done <users.csv
 
   echo "*** Load test completed: $(date)"
 
