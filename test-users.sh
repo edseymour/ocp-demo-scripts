@@ -5,6 +5,15 @@ function check_exists()
   [[ "$2" == "" ]] && echo "Missing $1" && exit 1
 }
 
+
+TOKEN=$1
+SERVER=$2
+check_exists "OpenShift user token with edit access to all target projects" $TOKEN
+check_exists "OpenShift server" $SERVER
+
+OCOPTS="--token=$TOKEN --server=$SERVER"
+
+
 function default_if_empty()
 {
   if [[ "$2" == "" ]]; then 
@@ -18,14 +27,14 @@ function watch_deploy
 {
 pod=$1
 count=0
-while [[ $(oc get pod $pod --no-headers | grep Running | wc -l) -lt 1 ]]
+while [[ $(oc get pod $pod --no-headers $OCOPTS | grep Running | wc -l) -lt 1 ]]
 do
    sleep 2
    counter=$((counter + 1))
    [[ $counter -gt 20 ]] && break
    echo "*** Waiting for deployer pod, attempt $counter"
 done
-oc logs -f $pod
+oc logs -f $pod $OCOPTS
 
 }
 
@@ -33,20 +42,20 @@ function test_dev()
 {
 user=$1
 
-oc project dev-$user
+oc project dev-$user $OCOPTS
 
-if [[ "dev-$user" == "$(oc project -q)" ]]
+if [[ "dev-$user" == "$(oc project -q $OCOPTS)" ]]
 then
 
-oc delete all --all
-oc new-app monster
+oc delete all --all $OCOPTS
+oc new-app monster $OCOPTS
 
-while [[ $(oc get builds --no-headers | wc -l) -lt 1 ]]
+while [[ $(oc get builds --no-headers $OCOPTS| wc -l) -lt 1 ]]
 do
    sleep 1
 done
 
-oc logs -f builds/monster-1 > logs/monster-build-$user.log
+oc logs -f builds/monster-1 $OCOPTS > logs/monster-build-$user.log
 
 watch_deploy monster-1-deploy
 
@@ -57,16 +66,16 @@ fi
 function test_uat()
 {
 user=$1
-oc project uat-$user
-if [[ "uat-$user" == "$(oc project -q)" ]]
+oc project uat-$user $OCOPTS
+if [[ "uat-$user" == "$(oc project -q $OCOPTS)" ]]
 then
 
-oc delete all --all
-oc new-app monster-app
+oc delete all --all $OCOPTS
+oc new-app monster-app $OCOPTS
 
 watch_deploy monster-mysql-1-deploy
 
-oc tag monster:latest monster:uat -n dev-$user
+oc tag monster:latest monster:uat -n dev-$user $OCOPTS
 sleep 3
 watch_deploy monster-1-deploy
 
@@ -101,8 +110,8 @@ test_app $user 'dev'
 test_app $user 'uat'
 
   if [[ $load -eq 0 ]]; then
-    oc delete all --all -n dev-$user
-    oc delete all --all -n uat-$user
+    oc delete all --all -n dev-$user $OCOPTS
+    oc delete all --all -n uat-$user $OCOPTS
   fi
 }
 
@@ -114,8 +123,6 @@ echo "*** Build logs written to ./logs directory"
 if [[ $LOADTEST -eq 0 ]]; then echo "*** Sequential build test started: $(date)"
 else echo "*** Load test started: $(date)"; fi
 
-echo "*** Please login to OpenShift with a user with edit control over all target users"
-oc login https://console.openshift.red
 
 while IFS=, read user password name
 do
@@ -130,8 +137,8 @@ else
 
   while IFS=, read user password name
   do
-    oc delete all --all -n dev-$user
-    oc delete all --all -n uat-$user
+    oc delete all --all -n dev-$user $OCOPTS
+    oc delete all --all -n uat-$user $OCOPTS
   done
 
   echo "*** Load test completed: $(date)"
