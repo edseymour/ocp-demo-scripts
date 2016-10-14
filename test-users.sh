@@ -23,17 +23,17 @@ function default_if_empty()
   fi
 }
 
-function watch_deploy()
+function watch_pod()
 {
 pod=$1
 proj=$2
 counter=0
 echo "*** Waiting for deployment pod $pod in project $proj"
-while [[ $(oc get pod $pod --no-headers -n $proj $OCOPTS | grep Running | wc -l) -lt 1 ]]
+while [[ $(oc get pod $pod --no-headers -n $proj $OCOPTS 2>/dev/null | grep Running | wc -l) -lt 1 ]]
 do
    sleep 2
    counter=$((counter + 1))
-   [[ $counter -gt 20 ]] && echo "*** Gave up waiting for deployment pod $pod in project $proj" && break
+   [[ $counter -gt 50 ]] && echo "*** Gave up waiting for deployment pod $pod in project $proj" && break
    echo "*** Waiting for deployer pod, attempt $counter"
 done
 
@@ -49,18 +49,11 @@ echo "*** Testing development project $proj"
 oc delete all --all -n $proj $OCOPTS
 oc new-app monster -n $proj $OCOPTS
 
-counter=0
-while [[ $(oc get builds --no-headers -n $proj $OCOPTS| wc -l) -lt 1 ]]
-do
-   sleep 1
-   counter=$((counter + 1)) 
-   [[ $counter -gt 20 ]] && echo "*** Gave up waiting for build in project $proj" && break
-
-done
+watch_pod monster-1-build $proj
 
 oc logs -f builds/monster-1 -n $proj $OCOPTS > logs/monster-build-$user.log
 
-watch_deploy monster-1-deploy $proj
+watch_pod monster-1-deploy $proj
 
 }
 
@@ -73,10 +66,10 @@ echo "*** Testing promotion in project $proj"
 oc delete all --all -n $proj $OCOPTS
 oc new-app monster-app -n $proj $OCOPTS
 
-watch_deploy monster-mysql-1-deploy $proj
+watch_pod monster-mysql-1-deploy $proj
 
 oc tag monster:latest monster:uat -n dev-$user -n $proj $OCOPTS
-watch_deploy monster-1-deploy $proj
+watch_pod monster-1-deploy $proj
 
 }
 
