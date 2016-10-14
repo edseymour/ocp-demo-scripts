@@ -69,7 +69,8 @@ oc new-app monster-app -n $proj $OCOPTS
 
 watch_pod monster-mysql-1-deploy $proj
 
-oc tag monster:latest monster:uat -n dev-$user -n $proj $OCOPTS
+echo "*** Tagging image"
+oc tag monster:latest monster:uat -n dev-$user $OCOPTS
 watch_pod monster-1-deploy $proj
 
 }
