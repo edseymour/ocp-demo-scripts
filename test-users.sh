@@ -114,6 +114,9 @@ echo "*** Build logs written to ./logs directory"
 if [[ $LOADTEST -eq 0 ]]; then echo "*** Sequential build test started: $(date)"
 else echo "*** Load test started: $(date)"; fi
 
+echo "*** Please login to OpenShift with a user with edit control over all target users"
+oc login https://console.openshift.red
+
 while IFS=, read user password name
 do
 
