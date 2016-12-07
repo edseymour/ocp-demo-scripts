@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: ${NAME}-persistent
+parameters:
+- name: NAME
+  required: true
+  description: The name of this ${NAME} service
+- name: SIZE
+  required: true
+  value: '5'
+  description: The size of persistent volume to request
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations: {}
+    labels:
+      app: ${NAME}
+    name: ${NAME}
+  spec:
+    ports:
+    - name: 8081-tcp
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+    selector:
+      app: ${NAME}
+      deploymentconfig: ${NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${NAME}
+    name: ${NAME}
+  spec:
+    port:
+      targetPort: 8081-tcp
+    to:
+      kind: Service
+      name: ${NAME}
+      weight: 100
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: ${NAME}
+    name: ${NAME}
+  spec:
+    replicas: 1
+    selector:
+      app: ${NAME}
+      deploymentconfig: ${NAME}
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/container.${NAME}.image.entrypoint: '["/bin/sh","-c","${JAVA_HOME}/bin/java   -D${NAME}-work=${SONATYPE_WORK}
+            -D${NAME}-webapp-context-path=${CONTEXT_PATH}   -Xms${MIN_HEAP} -Xmx${MAX_HEAP}   -cp
+            ''conf/:lib/*''   ${JAVA_OPTS}   org.sonatype.${NAME}.bootstrap.Launcher
+            ${LAUNCHER_CONF}"]'
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: ${NAME}
+          deploymentconfig: ${NAME}
+      spec:
+        containers:
+        - env:
+          - name: CONTEXT_PATH
+            value: /
+          image: ''
+          imagePullPolicy: Always
+          name: ${NAME}
+          ports:
+          - containerPort: 8081
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /sonatype-work
+            name: ${NAME}-volume-1
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: ${NAME}-volume-1
+          persistentVolumeClaim:
+            claimName: ${NAME}
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - docker.io/sonatype/nexus
+        from:
+          kind: ImageStreamTag
+          name: nexus:latest
+      type: ImageChange
+  status:
+    availableReplicas: 1
+    observedGeneration: 4
+    replicas: 2
+    unavailableReplicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      volume.alpha.kubernetes.io/storage-class: foo
+    name: ${NAME}
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${SIZE}
+  status: {}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: ${NAME}
+    name: ${NAME}
+  spec:
+    tags:
+    - annotations:
+        openshift.io/imported-from: sonatype/nexus
+      from:
+        kind: DockerImage
+        name: nexus:latest
+      name: latest

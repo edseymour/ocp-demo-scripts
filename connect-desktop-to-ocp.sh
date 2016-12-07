@@ -14,19 +14,16 @@ function default_if_empty
 }
 
 
-USAGE="$0 <Gogs URL> <Gogs User> <Gogs Password>"
-CLONE_URL=https://github.com/jim-minter/ose3-demos.git
-DOWNLOAD_URL=https://github.com/jim-minter/ose3-demos/archive/master.zip
+USAGE="$0 <home-dir> <Gogs URL> <Gogs User> <Gogs Password>"
 
-GOGSURL=$1
+HOMED=$1
+check_exists "provide a home directory, $USAGE" $HOMED
+GOGSURL=$2
 check_exists "provide a Gogs URL, $USAGE" $GOGSURL
-GOGSUSER=$2
+GOGSUSER=$3
 check_exists "provide a Gogs user, $USAGE" $GOGSUSER
-GOGSPASS=$3
+GOGSPASS=$4
 check_exists "provide a Gogs user password, $USAGE" $GOGSPASS
-
-wget $DOWNLOAD_URL
-unzip master.zip
 
 while IFS=, read user password name
 do
@@ -37,25 +34,21 @@ curl -v -u $GOGSUSER:$GOGSPASS -H "Content-Type: application/json" -X POST -d '{
 ## create the repo
 curl -v -u $user:$password -H "Content-Type: application/json" -X POST -d '{"name":"monster","description":"Ticket Monster for '"$name"'","private":false}' $GOGSURL/api/v1/user/repos
 
-pushd ose3-demos-master/git/monster/
 
+runuser -l $user -c "pushd $HOMED/code/monster
 git init
 git add .
-
-git config --global user.name "$name"
-git config --global user.email "$user@openshift.red"
+git config --global user.name \"$name\"
+git config --global user.email \"$user@openshift.red\"
 git config credential.helper 'store --file .git/credentials'
-echo "http://$user:$password@gogs.apps.openshift.red" > .git/credentials
+echo \"http://$user:$password@gogs.apps.openshift.red\" > .git/credentials
 chmod 600 .git/credentials
 
-git commit -am "inital commit for $name"
-git remote add origin $GOGSURL/$user/monster.git
+git commit -am \"inital commit for $name\"
+git remote add origin $GOGSURL/$user/monster.gi
 git push -u origin master
 
-# clean git init
-rm -rf .git
-
-popd
+popd"
 
 
 done <users.csv

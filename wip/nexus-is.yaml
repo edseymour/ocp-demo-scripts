@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ImageStream
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    openshift.io/image.dockerRepositoryCheck: 2016-11-28T14:09:04Z
+  creationTimestamp: null
+  generation: 2
+  labels:
+    app: nexus
+  name: nexus
+spec:
+  tags:
+  - annotations:
+      openshift.io/imported-from: sonatype/nexus
+    from:
+      kind: DockerImage
+      name: 172.30.26.232:5000/dev-services/nexus:latest
+    generation: 2
+    importPolicy: {}
+    name: latest
+status:
+  dockerImageRepository: ""
