@@ -29,9 +29,9 @@ do
 echo "**"
 echo "**"
 echo "** Creating default projects for $user"
-oc adm new-project dev-$user --display-name="App Dev - $name" --description="Application development project, where applications are coded and built" --admin=$user
-oc adm new-project uat-$user --display-name="App Test - $name" --description="Application testing project, where applications tested and approved" --admin=$user
-oc adm new-project prod-$user --display-name="App Prod - $name" --description="Application production project, where applications are hosted" --admin=$user
+oc adm new-project dev-$user --display-name="App Dev - $name ($user)" --description="Application development project, where applications are coded and built" --admin=$user
+oc adm new-project uat-$user --display-name="App Test - $name ($user)" --description="Application testing project, where applications tested and approved" --admin=$user
+oc adm new-project prod-$user --display-name="App Prod - $name ($user)" --description="Application production project, where applications are hosted" --admin=$user
 
 sed 's|%GITURL%|'"$GOGSURL/$user"'/monster.git|g' monster-dev.yaml | sed 's|%MAVENURL%|'"$MAVENURL"'|g' | oc create -n dev-$user -f -
 sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-test.yaml | oc create -n uat-$user -f -
@@ -42,8 +42,8 @@ sed 's/%APP/monster/g' pipeline-template.yaml | sed 's/%DEV_PROJ/dev-'"$user"'/g
 oc policy add-role-to-group system:image-puller system:serviceaccounts:uat-$user -n dev-$user
 oc policy add-role-to-group system:image-puller system:serviceaccounts:prod-$user -n dev-$user
 # allow jenkins running in dev project to edit uat and prod
-oc policy add-role-to-group edit system:serviceaccount:dev-$user:jenkins -n uat-$user
-oc policy add-role-to-group edit system:serviceaccount:dev-$user:jenkins -n prod-$user
+oc policy add-role-to-user edit system:serviceaccount:dev-$user:jenkins -n uat-$user
+oc policy add-role-to-user edit system:serviceaccount:dev-$user:jenkins -n prod-$user
 
 
 done <users.csv
