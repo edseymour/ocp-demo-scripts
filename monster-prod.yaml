@@ -27,15 +27,15 @@ objects:
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
-    name: monster
+    name: monster-blue
   spec:
     replicas: 1
     selector:
-      deploymentConfig: monster
+      deploymentConfig: monster-blue
     template:
       metadata:
         labels:
-          deploymentConfig: monster
+          deploymentConfig: monster-blue
         name: monster
       spec:
         containers:
@@ -80,8 +80,64 @@ objects:
         - monster
         from:
           kind: ImageStream
-          name: monster:${IMAGE_TAG}
-          namespace: ${DEV_NAMESPACE}
+          name: monster:${IMAGE_TAG}-blue
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: monster-green
+  spec:
+    replicas: 1
+    selector:
+      deploymentConfig: monster-green
+    template:
+      metadata:
+        labels:
+          deploymentConfig: monster-green
+        name: monster
+      spec:
+        containers:
+        - name: monster
+          image: monster
+          ports:
+          - name: http
+            containerPort: 8080
+          - name: jolokia
+            containerPort: 8778
+          - name: debug
+            containerPort: 8787
+          readinessProbe:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - /opt/eap/bin/readinessProbe.sh
+          env:
+          - name: DB_SERVICE_PREFIX_MAPPING
+            value: monster-mysql=DB
+          - name: TX_DATABASE_PREFIX_MAPPING
+            value: monster-mysql=DB
+          - name: DB_JNDI
+            value: java:jboss/datasources/MySQLDS
+          - name: DB_DATABASE
+            value: ${MYSQL_DATABASE}
+          - name: DB_USERNAME
+            value: ${MYSQL_USER}
+          - name: DB_PASSWORD
+            value: ${MYSQL_PASSWORD}
+          - name: JAVA_OPTS
+            value: "-Xmx512m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.logmanager -Djava.awt.headless=true -Djboss.modules.policy-permissions=true"
+          - name: DEBUG
+            value: "true"
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - monster
+        from:
+          kind: ImageStream
+          name: monster:${IMAGE_TAG}-green
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
@@ -138,14 +194,23 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: monster
+    name: monster-blue
   spec:
     ports:
     - name: http
       port: 8080
     selector:
-      deploymentConfig: monster
-
+      deploymentConfig: monster-blue
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: monster-green
+  spec:
+    ports:
+    - name: http
+      port: 8080
+    selector:
+      deploymentConfig: monster-green
 - kind: Service
   apiVersion: v1
   metadata:
@@ -155,11 +220,19 @@ objects:
     - port: 3306
     selector:
       deploymentConfig: monster-mysql
-
 - kind: Route
   apiVersion: v1
   metadata:
     name: monster
   spec:
     to:
-      name: monster
+      name: monster-blue
+      kind: Service
+      weight: 100
+    alternateBackends:
+    - kind: Service
+      name: monster-green
+      weight: 0
+    port:
+      targetPort: http 
+  
