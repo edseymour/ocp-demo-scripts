@@ -36,6 +36,7 @@ oc adm new-project prod-$user --display-name="App Prod - $name" --description="A
 sed 's|%GITURL%|'"$GOGSURL/$user"'/monster.git|g' monster-dev.yaml | sed 's|%MAVENURL%|'"$MAVENURL"'|g' | oc create -n dev-$user -f -
 sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-test.yaml | oc create -n uat-$user -f -
 sed 's/%DEVNAMESPACE%/'"dev-$user"'/g' monster-prod.yaml | oc create -n prod-$user -f -
+sed 's/%APP/monster/g' pipeline-template.yaml | sed 's/%DEV_PROJ/dev-'"$user"'/g' | sed 's/%TEST_PROJ/uat-'"$user"'/g' | sed 's/%PROD_PROJ/prod-'"$user"'/g' | oc create -n dev-$user -f -
 
 # allow uat project to pull images from dev project
 oc policy add-role-to-group system:image-puller system:serviceaccounts:uat-$user -n dev-$user

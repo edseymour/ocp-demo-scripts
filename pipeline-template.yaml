@@ -77,18 +77,22 @@ parameters:
   displayName: Pipeline Name
   name: TARGET_APP
   required: true
+  value: %APP
 - description: DEV project name containing the buildconfigs
   displayName: DEV Project Name
   name: DEV_PROJECT
   required: true
+  value: %DEV_PROJ
 - description: TEST project name containing the buildconfigs
   displayName: TEST Project Name
   name: TEST_PROJECT
   required: true
+  value: %TEST_PROJ
 - description: PROD project name containing the buildconfigs
   displayName: PROD Project Name
   name: PROD_PROJECT
   required: true
+  value: %PROD_PROJ
 - description: GitHub webhook secret
   displayName: GitHub Webhook Secret
   from: '[a-zA-Z0-9]{8}'
