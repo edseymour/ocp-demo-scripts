@@ -33,11 +33,11 @@ while [[ $(oc get pod $pod --no-headers -n $proj $OCOPTS 2>/dev/null | grep Runn
 do
    sleep 2
    counter=$((counter + 1))
-   [[ $counter -gt 100 ]] && echo "*** Gave up waiting for pod $pod in project $proj after 200 seconds" && break
+   [[ $counter -gt 200 ]] && echo "*** Gave up waiting for pod $pod in project $proj after 400 seconds" && break
 done
 
 echo "*** Waiting for watched pod to complete $proj/$pod"
-oc logs -f $pod -n $proj $OCOPTS 2>&1 >/dev/null
+oc logs -f $pod -n $proj $OCOPTS 2>&1 >> logs/$proj.log
 
 }
 
@@ -47,10 +47,10 @@ user=$1
 proj=dev-$user 
 echo "*** Testing development project $proj"
 oc delete all --all -n $proj $OCOPTS
-oc new-app monster -n $proj $OCOPTS
+oc new-app monster -n $proj $OCOPTS >> logs/$proj.log
 
-watch_pod monster-1-build $proj
-watch_pod monster-1-deploy $proj
+watch_pod monster-1-build $proj >> logs/$proj.log
+watch_pod monster-1-deploy $proj >> logs/$proj.log
 
 }
 
@@ -61,13 +61,13 @@ proj=uat-$user
 
 echo "*** Testing promotion in project $proj"
 oc delete all --all -n $proj $OCOPTS
-oc new-app monster-app -n $proj $OCOPTS
+oc new-app monster-app -n $proj $OCOPTS >> logs/$proj.log
 
-watch_pod monster-mysql-1-deploy $proj
+watch_pod monster-mysql-1-deploy $proj >> logs/$proj.log
 
 echo "*** Tagging image dev-$user/monster:latest"
-oc tag monster:latest monster:uat -n dev-$user $OCOPTS
-watch_pod monster-1-deploy $proj
+oc tag monster:latest monster:uat -n dev-$user $OCOPTS >> logs/$proj.log
+watch_pod monster-1-deploy $proj >> logs/$proj.log
 
 }
 
@@ -93,12 +93,12 @@ user=$1
 load=$2
 echo "**"
 echo "*** TESTING USER $1"
-test_dev $user
+test_dev $user >> logs/$proj.log
 
-test_uat $user
+test_uat $user >> logs/$proj.log
 
-test_app $user 'dev'
-test_app $user 'uat'
+test_app $user 'dev' >> logs/$proj.log
+test_app $user 'uat' >> logs/$proj.log
 
   if [[ $load -eq 0 ]]; then
     oc delete all --all -n dev-$user $OCOPTS
