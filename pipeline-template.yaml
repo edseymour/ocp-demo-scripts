@@ -89,4 +89,16 @@ parameters:
   displayName: PROD Project Name
   name: PROD_PROJECT
   required: true
+- description: GitHub webhook secret
+  displayName: GitHub Webhook Secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GITHUB_WEBHOOK_SECRET
+  required: true
+- description: Generic webhook secret
+  displayName: Generic Webhook Secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GENERIC_WEBHOOK_SECRET
+  required: true
 
