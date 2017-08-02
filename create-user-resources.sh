@@ -20,6 +20,8 @@ DOWNLOAD_URL=https://github.com/jim-minter/ose3-demos/archive/master.zip
 
 GOGSURL=$1
 check_exists "provide a Gogs URL, $USAGE" $GOGSURL
+GOGSHOST=$(echo $GOGSURL | awk -F/ '{print $3}')
+GOGSSCHEME=$(echo $GOGSURL | awk -F/ '{print $1}')
 GOGSUSER=$2
 check_exists "provide a Gogs user, $USAGE" $GOGSUSER
 GOGSPASS=$3
@@ -44,12 +46,13 @@ git add .
 
 git config --global user.name "$name"
 git config --global user.email "$user@openshift.red"
-git config credential.helper 'store --file .git/credentials'
-echo "http://$user:$password@gogs.apps.openshift.red" > .git/credentials
-chmod 600 .git/credentials
+#git config credential.helper 'store --file .git/credentials'
+#echo "$GOGSSCHEME//$user:$password@$GOGSHOST" > .git/credentials
+#chmod 600 .git/credentials
 
 git commit -am "inital commit for $name"
-git remote add origin $GOGSURL/$user/monster.git
+git remote add origin $GOGSSCHEME//$user:$password@$GOGSHOST/$user/monster.git
+
 git push -u origin master
 
 # clean git init
