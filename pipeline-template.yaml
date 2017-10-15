@@ -72,6 +72,29 @@ objects:
     - generic:
         secret: ${GENERIC_WEBHOOK_SECRET}
       type: Generic
+
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    name: test_imagepuller
+  roleRef:
+    name: system:image-puller
+  subjects:
+  - kind: ServiceAccount
+    name: system:serviceaccount:${TEST_PROJECT}:default
+
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    name: test_imagepuller
+  roleRef:
+    name: system:image-puller
+  subjects:
+  - kind: ServiceAccount
+    name: system:serviceaccount:${PROD_PROJECT}:default
+
 parameters:
 - description: The name for the pipeline.
   displayName: Pipeline Name
