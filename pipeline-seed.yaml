@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: pipeline-preseed
+metadata:
+  name: pipeline-preseed
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      build: ${TARGET_APP}
+    name: ${TARGET_APP}-pipeline-preseed
+    annotations:
+      pipeline.alpha.openshift.io/uses: '[{"name": "${TARGET_APP}", "namespace": "${DEV_PROJECT}", "kind": "BuildConfig"},{"name": "${TARGET_APP}", "namespace": "${TEST_PROJECT}", "kind": "DeploymentConfig"},{"name": "${TARGET_APP}-green", "namespace": "${PROD_PROJECT}", "kind": "DeploymentConfig"},{"name": "${TARGET_APP}-blue", "namespace": "${PROD_PROJECT}", "kind": "DeploymentConfig"}]'
+  spec:
+    runPolicy: Serial
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfile: |-
+          node {
+
+            openshiftTag(sourceStream: '${TARGET_APP}', sourceTag: 'latest', namespace: '${DEV_PROJECT}', destinationStream: '${TARGET_APP}', destinationTag: 'uat', destinationNamespace: '${TEST_PROJECT}')
+            openshiftTag(sourceStream: '${TARGET_APP}', sourceTag: 'uat', namespace: '${TEST_PROJECT}', destinationStream: '${TARGET_APP}', destinationTag: "prod-blue", destinationNamespace: '${PROD_PROJECT}')
+            openshiftTag(sourceStream: '${TARGET_APP}', sourceTag: 'uat', namespace: '${TEST_PROJECT}', destinationStream: '${TARGET_APP}', destinationTag: "prod-green", destinationNamespace: '${PROD_PROJECT}')
+          }
+
+      type: JenkinsPipeline
+    triggers:
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
+
+parameters:
+- description: The name for the pipeline.
+  displayName: Pipeline Name
+  name: TARGET_APP
+  required: true
+  value: %APP
+- description: DEV project name containing the buildconfigs
+  displayName: DEV Project Name
+  name: DEV_PROJECT
+  required: true
+  value: %DEV_PROJ
+- description: TEST project name containing the buildconfigs
+  displayName: TEST Project Name
+  name: TEST_PROJECT
+  required: true
+  value: %TEST_PROJ
+- description: PROD project name containing the buildconfigs
+  displayName: PROD Project Name
+  name: PROD_PROJECT
+  required: true
+  value: %PROD_PROJ
+- description: GitHub webhook secret
+  displayName: GitHub Webhook Secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GITHUB_WEBHOOK_SECRET
+  required: true
+- description: Generic webhook secret
+  displayName: Generic Webhook Secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GENERIC_WEBHOOK_SECRET
+  required: true
+

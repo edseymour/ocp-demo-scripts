@@ -1,0 +1,135 @@
+kind: Template
+apiVersion: v1
+metadata:
+  name: monster-build
+  annotations:
+    tags: instant-app,javaee
+    iconClass: icon-jboss
+    description: |
+      Ticket Monster is a moderately complex application that demonstrates how
+      to build modern applications using JBoss web technologies
+
+parameters:
+- name: GIT_URI
+  value: '%GITURL%'
+  description: Location of the source code
+  displayName: Git Clone URI
+  required: true
+- name: MAVEN_MIRROR_URL
+  value: '%MAVENURL%'
+  displayName: Maven Mirror URL
+  description: Shared repository for Maven artefacts
+objects:
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: monster
+
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: monster
+  spec:
+    triggers:
+    - type: Generic
+      generic:
+        secret: secret
+    - type: ImageChange
+    - type: ConfigChange
+    strategy:
+      type: Source
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: jboss-eap64-openshift:latest
+          namespace: openshift
+        env:
+          -
+            name: MAVEN_MIRROR_URL
+            value: ${MAVEN_MIRROR_URL}
+    source:
+      type: Git
+      git:
+        uri: ${GIT_URI}
+        ref: master
+    output:
+      to:
+        kind: ImageStreamTag
+        name: monster:latest
+
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: monster
+  spec:
+    replicas: 1
+    selector:
+      deploymentConfig: monster
+    template:
+      metadata:
+        labels:
+          deploymentConfig: monster
+        name: monster
+      spec:
+        containers:
+        - name: monster
+          image: monster
+          ports:
+          - name: http
+            containerPort: 8080
+          - name: jolokia
+            containerPort: 8778
+          - name: debug
+            containerPort: 8787
+          readinessProbe:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - /opt/eap/bin/readinessProbe.sh
+          env:
+          - name: DB_SERVICE_PREFIX_MAPPING
+            value: monster-mysql=DB
+          - name: TX_DATABASE_PREFIX_MAPPING
+            value: monster-mysql=DB
+          - name: DB_JNDI
+            value: java:jboss/datasources/MySQLDS
+          - name: DB_DATABASE
+            value: name_of_db
+          - name: DB_USERNAME
+            value: db_user
+          - name: DB_PASSWORD
+            value: db_user_password
+          - name: JAVA_OPTS
+            value: "-Xmx512m -XX:MaxPermSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.logmanager -Djava.awt.headless=true -Djboss.modules.policy-permissions=true"
+          - name: DEBUG
+            value: "true"
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - monster
+        from:
+          kind: ImageStream
+          name: monster
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: monster
+  spec:
+    ports:
+    - name: http
+      port: 8080
+    selector:
+      deploymentConfig: monster
+
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: monster
+  spec:
+    to:
+      name: monster
