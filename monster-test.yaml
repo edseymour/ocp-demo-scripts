@@ -21,6 +21,15 @@ parameters:
   generate: expression
 
 objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    generation: 1
+    name: monster
+  spec:
+    lookupPolicy:
+      local: false
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:

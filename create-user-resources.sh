@@ -27,7 +27,7 @@ check_exists "provide a Gogs user, $USAGE" $GOGSUSER
 GOGSPASS=$3
 check_exists "provide a Gogs user password, $USAGE" $GOGSPASS
 
-wget $DOWNLOAD_URL
+[ ! -f master.zip ] && wget $DOWNLOAD_URL
 unzip master.zip
 
 while IFS=, read user password name
