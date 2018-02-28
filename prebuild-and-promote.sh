@@ -20,7 +20,7 @@ pod=$1
 proj=$2
 counter=0
 echo "*** Waiting for pod $pod in project $proj"
-while [[ $(oc get pod $pod --no-headers -n $proj  2>/dev/null | grep Running | wc -l) -lt 1 ]]
+while [[ $(oc get pod $pod --no-headers -n $proj  2>/dev/null | grep "Running\|Complete" | wc -l) -lt 1 ]]
 do
    sleep 2
    counter=$((counter + 1))
@@ -55,10 +55,20 @@ function build_and_deploy()
   
   test_dev $user
 
+  oc new-app monster-app -n uat-$user
+  oc new-app monster-app -n prod-$user
+
+  watch_pod monster-mysql-1-deploy uat-$user
+  watch_pod monster-mysql-1-deploy prod-$user
+
   oc start-build monster-pipeline-preseed -n dev-$user
 
   watch_pod monster-1-deploy uat-$user >> logs/$proj.log
-  watch_pod monster-1-deploy prod-$user >> logs/$proj.log
+  watch_pod monster-green-1-deploy prod-$user >> logs/$proj.log
+  watch_pod monster-blue-1-deploy prod-$user >> logs/$proj.log
+
+  # clean up in dev
+  oc delete all --all -n dev-$user
 }
 
 function process_users()
