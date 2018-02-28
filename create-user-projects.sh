@@ -47,5 +47,9 @@ oc policy add-role-to-group system:image-puller system:serviceaccounts:prod-$use
 oc policy add-role-to-user edit system:serviceaccount:dev-$user:jenkins -n uat-$user
 oc policy add-role-to-user edit system:serviceaccount:dev-$user:jenkins -n prod-$user
 
+# create imagestreams, required for 3.7+
+oc create imagestream monster -n uat-$user
+oc create imagestream monster -n prod-$user
+
 
 done <users.csv

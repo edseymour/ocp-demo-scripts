@@ -64,13 +64,14 @@ function build_and_deploy()
 function process_users()
 {
 
-  count=0
+  # start count at 9 so that first user is used to prime nexus cache
+  count=9 
   modu=1
 
   while IFS=, read user password name
   do
 
-    test_dev $user &
+    build_and_deploy $user &
 
     let "count++"
     let "modu = $count % 10"
